@@ -875,27 +875,24 @@ function openPrefilledEmail(pdfName) {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // Base message (Mac + iPad)
-  let body = "Attached is your inspection report.%0A%0A";
+  // Build plain-text body with real newlines
+  let bodyText = "Attached is your inspection report.\n\n";
 
-  // Add helper text ONLY on iPad
   if (isIOS) {
-    body += `If the file picker does not open automatically, tap the attachment icon and select:%0A${pdfName}%0A%0A`;
+    bodyText += `If the file picker does not open automatically, tap the attachment icon and select:\n${pdfName}\n\n`;
   }
 
-  // Encode final body
-  body = encodeURIComponent(body);
+  const body = encodeURIComponent(bodyText);
 
-  // Open email
   window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
 
-  // Only iPad needs the file picker
   if (isIOS) {
     setTimeout(() => {
       openFilePicker();
     }, 800);
   }
 }
+
 
 
 /* -----------------------------------------------------------
