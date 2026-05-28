@@ -870,22 +870,33 @@ function initSignaturePads() {
 
 function openPrefilledEmail(pdfName) {
   const to = document.getElementById("custEmail").value || "";
-  const cc = "office@yourcompany.com"; // change to your CC
+  const cc = "office@yourcompany.com";
   const subject = encodeURIComponent("Garage Door Inspection Report");
-  const body = encodeURIComponent(
-    `Attached is your inspection report.\n\nIf the file picker does not open automatically, tap the attachment icon and select:\n${pdfName}`
-  );
 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  // Base message (Mac + iPad)
+  let body = "Attached is your inspection report.%0A%0A";
+
+  // Add helper text ONLY on iPad
+  if (isIOS) {
+    body += `If the file picker does not open automatically, tap the attachment icon and select:%0A${pdfName}%0A%0A`;
+  }
+
+  // Encode final body
+  body = encodeURIComponent(body);
+
+  // Open email
   window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
 
-  setTimeout(() => {
-    openFilePicker();
-  }, 800);
+  // Only iPad needs the file picker
+  if (isIOS) {
+    setTimeout(() => {
+      openFilePicker();
+    }, 800);
+  }
 }
 
-function openFilePicker() {
-  document.getElementById("attachPicker").click();
-}
 
 /* -----------------------------------------------------------
    STATUS CLICK HANDLERS
