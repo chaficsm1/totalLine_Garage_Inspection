@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TotalLine Garage Door Inspection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --brand-blue: #0066cc;
+      --pass-green: #2e7d32;
+      --fail-red: #c62828;
+      --na-gray: #9e9e9e;
+      --border-light: #e0e0e0;
+      --note-border: #bbdefb;
+      --bg-light: #fafafa;
+      --text-main: #212121;
+      --text-muted: #616161;
+    }
+
+    .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-blue);
+    margin-bottom: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1rem 2rem;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0 0.75rem;
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-img {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--brand-blue);
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .job-info {
+      background: #f9fafc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #d0d7de;
+    }
+
+    .job-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .info-grid.three-col {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .info-grid.two-col {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .info-input {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.85rem;
+      background: #ffffff;
+    }
+
+    .section {
+      padding: 0.4rem 0 0.4rem;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .section-band {
+      background: #eef6ff;
+      border-left: 4px solid #0066cc;
+      padding: 0.6rem 0.8rem;
+      margin: 1rem 0 0.6rem;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .section-band-title,
+    .section-status-pill {
+      pointer-events: auto;
+    }
+
+    .section-band-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #003f80;
+    }
+
+    .section-status-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: #9ca3af;
+      text-transform: uppercase;
+    }
+
+    .section-status-pass {
+      background: #2e7d32 !important;
+    }
+
+    .section-status-fail {
+      background: #c62828 !important;
+    }
+
+    .section-status-pending {
+      background: #9ca3af !important;
+    }
+
+    .item-row-horizontal {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr 1.2fr;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px dashed #e5e7eb;
+      align-items: start;
+    }
+
+    .item-label {
+      font-size: 0.88rem;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-option {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .status-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #bdbdbd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      transition: 0.15s;
+    }
+
+    .status-circle.pass.selected {
+      border-color: var(--pass-green);
+      background: var(--pass-green);
+    }
+
+    .status-circle.fail.selected {
+      border-color: var(--fail-red);
+      background: var(--fail-red);
+    }
+
+    .status-circle.na.selected {
+      border-color: var(--na-gray);
+      background: var(--na-gray);
+    }
+
+    .status-circle-inner {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    .note-right textarea {
+      width: 100%;
+      min-height: 40px;
+      resize: vertical;
+      border-radius: 6px;
+      border: 1px solid var(--note-border);
+      padding: 0.35rem 0.45rem;
+      font-size: 0.82rem;
+      background: #f7fbff;
+    }
+
+    .signatures {
+      margin-top: 1.5rem;
+      padding-top: 0.75rem;
+      border-top: 2px solid var(--border-light);
+    }
+
+    .signatures-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .signature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .signature-block {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 0.5rem;
+      background: var(--bg-light);
+    }
+
+    .signature-label {
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+
+    canvas.signature-pad {
+      width: 100%;
+      height: 140px;
+      border-radius: 6px;
+      border: 1px dashed #bdbdbd;
+      background: #ffffff;
+      touch-action: none;
+    }
+
+    .small-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background: #e0e0e0;
+      color: #424242;
+      margin-top: 0.35rem;
+    }
+
+    .actions {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      padding-bottom: 1.5rem;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.55rem 1.3rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--brand-blue);
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background: #eeeeee;
+      color: #424242;
+    }
+
+    @media (max-width: 600px) {
+      .item-row-horizontal {
+        grid-template-columns: 1fr;
+      }
+      .info-grid.three-col,
+      .info-grid.two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .header-company {
+    font-size: 14px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .company-line {
+    font-weight: 500;
+  }
+
+.rec-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 40px;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.rec-text {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.rec-cost {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.rec-remove {
+  background: none;
+  border: none;
+  color: #d11a1a;      /* clean red */
+  font-size: 1.2rem;   /* smaller icon */
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.add-row-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--brand-blue);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.rec-text,
+.rec-cost {
+  height: 60px;        /* Forces both fields to match height */
+  display: flex;
+  align-items: center;
+}
+
+.rec-text {
+  resize: vertical;    /* Still allows expanding if needed */
+}
+
+  </style>
+</head>
+<body>
+  <div class="app" id="appRoot">
+   <!-- PDF CAPTURE AREA START -->
+<div id="pdfCaptureArea">
+
+  <div class="header">
+  <div class="header-left">
+<img src="https://raw.githubusercontent.com/chaficsm1/totalLine_Garage/main/garage.png"
+     class="logo-img"
+     crossorigin="anonymous">
+    <div class="header-title">TotalLine Garage Door Inspection</div>
+  </div>
+
+  <div class="header-right">
+    <div class="header-company">
+      <div class="company-line">(913) 687-8382</div>
+      <div class="company-line">a2zproservices@gmail.com</div>
+    </div>
+
+    <div id="headerDate"></div>
+  </div>
+</div>
+
+  <div class="header-divider"></div>
+
+  <div class="job-info">
+    <div class="job-header">
+      <h3>Job Information</h3>
+    </div>
+
+    <!-- Customer Detailed Address -->
+    <div class="info-grid three-col">
+      <div class="info-field">
+        <label class="info-label">Customer Name</label>
+        <input id="custName" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">Customer Phone</label>
+        <input id="custPhone" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">Customer Email</label>
+        <input id="custEmail" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">Street Address</label>
+        <input id="custStreet" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">City/State</label>
+        <input id="custCity" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">ZIP Code</label>
+        <input id="custZip" class="info-input" />
+      </div>
+    </div>
+
+    <!-- Technician Info -->
+    <div class="info-grid three-col">
+      <div class="info-field">
+        <label class="info-label">Technician Name</label>
+        <input id="techName" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">Technician Phone</label>
+        <input id="techPhone" class="info-input" />
+      </div>
+      <div class="info-field">
+        <label class="info-label">Technician Email</label>
+        <input id="techEmail" class="info-input" />
+      </div>
+    </div>
+
+  </div> <!-- END job-info -->
+
+  <div id="sectionsContainer"></div>
+
+
+<!-- RECOMMENDATIONS SECTION -->
+<div class="section-band">
+  <div class="section-band-title">Recommendations</div>
+</div>
+
+<div class="section" id="recommendationsSection">
+  <div id="recommendationsContainer">
+    <div class="rec-row">
+      <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
+      <input class="rec-cost" placeholder="Cost" />
+      <button class="rec-remove">×</button>
+    </div>
+  </div>
+
+  <button id="addRecBtn" class="add-row-btn">+ Add Recommendation</button>
+</div>
+
+
+<!-- SIGNATURE SECTION -->
+
+  <!-- SIGNATURES -->
+<div class="section-band">
+  <div class="section-band-title">Signatures</div>
+</div>
+
+<div class="section signatures">
+  <div class="signature-grid">
+    <div class="signature-block">
+      <div class="signature-label">Technician Signature</div>
+      <canvas id="sigTech" class="signature-pad"></canvas>
+      <button class="small-btn" data-clear="sigTech">Clear</button>
+    </div>
+
+    <div class="signature-block">
+      <div class="signature-label">Customer Signature</div>
+      <canvas id="sigCust" class="signature-pad"></canvas>
+      <button class="small-btn" data-clear="sigCust">Clear</button>
+    </div>
+  </div>
+</div>
+
+
+</div>
+<!-- PDF CAPTURE AREA END -->
+
+      <div class="actions">
+        <button id="resetBtn" class="btn btn-secondary">Reset</button>
+        <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
+        <button id="emailBtn" class="btn btn-primary">Email PDF</button>
+      </div>
+
+<script>
+/* -----------------------------------------------------------
+   STATE + SECTION CONFIG
+----------------------------------------------------------- */
+
+const STORAGE_KEY = "totalLineInspection_v1";
+
+const sectionsConfig = [
+  {
+    id: "doorHardware",
+    title: "Door Hardware",
+    items: [
+      "Hinges",
+      "Rollers",
+      "Tracks",
+      "Cables",
+      "Drums",
+      "Shaft",
+      "Center Bearing Plate",
+      "End Bearing Plates"
+    ]
+  },
+  {
+    id: "springs",
+    title: "Springs",
+    items: [
+      "Torsion Springs",
+      "Extension Springs",
+      "Spring Anchor",
+      "Spring Cones",
+      "Spring Tension"
+    ]
+  },
+  {
+    id: "opener",
+    title: "Opener System",
+    items: [
+      "Motor Unit",
+      "Rail Assembly",
+      "Trolley",
+      "Safety Sensors",
+      "Wall Console",
+      "Remote Controls",
+      "Emergency Release"
+    ]
+  },
+  {
+    id: "doorPanels",
+    title: "Door Panels",
+    items: [
+      "Panel Condition",
+      "Insulation",
+      "Weatherstripping",
+      "Bottom Seal",
+      "Window Inserts"
+    ]
+  }
+];
+
+/* -----------------------------------------------------------
+   LOAD / SAVE STATE
+----------------------------------------------------------- */
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let appState = loadState();
+
+/* -----------------------------------------------------------
+   BUILD SECTIONS
+----------------------------------------------------------- */
+
+function buildSections() {
+  const container = document.getElementById("sectionsContainer");
+  container.innerHTML = "";
+
+  sectionsConfig.forEach(section => {
+    const band = document.createElement("div");
+    band.className = "section-band";
+    band.innerHTML = `
+      <div class="section-band-title">${section.title}</div>
+      <div class="section-status-pill" id="pill-${section.id}">Pending</div>
+    `;
+    container.appendChild(band);
+
+    section.items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "item-row-horizontal";
+
+      const itemKey = `${section.id}_${item.replace(/\s+/g, "")}`;
+
+      const saved = appState[itemKey] || { status: "", note: "" };
+
+      row.innerHTML = `
+        <div class="item-label">${item}</div>
+
+        <div class="status-group" data-key="${itemKey}">
+          <div class="status-option" data-status="pass">
+            <div class="status-circle pass ${saved.status === "pass" ? "selected" : ""}">
+              <div class="status-circle-inner"></div>
+            </div>
+            Pass
+          </div>
+
+          <div class="status-option" data-status="fail">
+            <div class="status-circle fail ${saved.status === "fail" ? "selected" : ""}">
+              <div class="status-circle-inner"></div>
+            </div>
+            Fail
+          </div>
+
+          <div class="status-option" data-status="na">
+            <div class="status-circle na ${saved.status === "na" ? "selected" : ""}">
+              <div class="status-circle-inner"></div>
+            </div>
+            N/A
+          </div>
+        </div>
+
+        <div class="note-right">
+          <textarea data-note="${itemKey}" placeholder="Notes...">${saved.note || ""}</textarea>
+        </div>
+      `;
+
+      container.appendChild(row);
+    });
+  });
+}
+
+/* -----------------------------------------------------------
+   UPDATE SECTION STATUS PILLS
+----------------------------------------------------------- */
+
+function updateSectionPills() {
+  sectionsConfig.forEach(section => {
+    const pill = document.getElementById(`pill-${section.id}`);
+    let hasFail = false;
+    let hasPass = false;
+
+    section.items.forEach(item => {
+      const key = `${section.id}_${item.replace(/\s+/g, "")}`;
+      const saved = appState[key];
+      if (!saved) return;
+
+      if (saved.status === "fail") hasFail = true;
+      if (saved.status === "pass") hasPass = true;
+    });
+
+    if (hasFail) {
+      pill.textContent = "Fail";
+      pill.className = "section-status-pill section-status-fail";
+    } else if (hasPass) {
+      pill.textContent = "Pass";
+      pill.className = "section-status-pill section-status-pass";
+    } else {
+      pill.textContent = "Pending";
+      pill.className = "section-status-pill section-status-pending";
+    }
+  });
+}
+
+/* -----------------------------------------------------------
+   EVENT BINDING
+----------------------------------------------------------- */
+
+function bindEvents() {
+  document.querySelectorAll(".status-option").forEach(opt => {
+    opt.addEventListener("click", () => {
+      const key = opt.parentElement.dataset.key;
+      const status = opt.dataset.status;
+
+      appState[key] = appState[key] || {};
+      appState[key].status = status;
+      saveState(appState);
+
+      opt.parentElement.querySelectorAll(".status-circle").forEach(c => c.classList.remove("selected"));
+      opt.querySelector(".status-circle").classList.add("selected");
+
+      updateSectionPills();
+    });
+  });
+
+  document.querySelectorAll("textarea[data-note]").forEach(area => {
+    area.addEventListener("input", () => {
+      const key = area.dataset.note;
+      appState[key] = appState[key] || {};
+      appState[key].note = area.value;
+      saveState(appState);
+    });
+  });
+}
+
+/* -----------------------------------------------------------
+   SAVE + LOAD JOB INFORMATION FIELDS 
+----------------------------------------------------------- */
+
+function loadJobInfo() {
+  const fields = [
+    "custName",
+    "custStreet",
+    "custCity",
+    "custState",
+    "custZip",
+    "custPhone",
+    "techName",
+    "techPhone",
+    "techEmail",
+    "companyPhone",
+    "companyEmail",
+  ];
+
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const saved = appState[id];
+    if (saved !== undefined) el.value = saved;
+  });
+}
+
+function bindJobInfo() {
+  const fields = [
+    "custName",
+    "custStreet",
+    "custCity",
+    "custState",
+    "custZip",
+    "custPhone",
+    "techName",
+    "techPhone",
+    "techEmail",
+    "companyPhone",
+    "companyEmail",
+  ];
+
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", () => {
+      appState[id] = el.value;
+      saveState(appState);
+    });
+  });
+}
+
+loadJobInfo();
+bindJobInfo();
+
+/* -----------------------------------------------------------
+   RESET FORM
+----------------------------------------------------------- */
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+/* -----------------------------------------------------------
+   EMAIL PDF (iPad Share Sheet → Mail)
+----------------------------------------------------------- */
+
+/* -----------------------------------------------------------
+   SIGNATURE PADS
+----------------------------------------------------------- */
+function initSignaturePads() {
+  ["sigTech", "sigCust"].forEach(id => {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext("2d");
+
+    let drawing = false;
+
+    canvas.addEventListener("pointerdown", e => {
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+
+    canvas.addEventListener("pointermove", e => {
+      if (!drawing) return;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    });
+
+    canvas.addEventListener("pointerup", () => (drawing = false));
+    canvas.addEventListener("pointerleave", () => (drawing = false));
+  });
+
+  document.querySelectorAll("[data-clear]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-clear");
+      const canvas = document.getElementById(id);
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    });
+  });
+}
+
+/* -----------------------------------------------------------
+   HYBRID EMAIL WORKFLOW FUNCTIONS
+----------------------------------------------------------- */
+
+function openPrefilledEmail(pdfName) {
+  const to = document.getElementById("custEmail").value || "";
+  const cc = "office@yourcompany.com"; // change to your CC
+  const subject = encodeURIComponent("Garage Door Inspection Report");
+  const body = encodeURIComponent(
+    `Attached is your inspection report.\n\nIf the file picker does not open automatically, tap the attachment icon and select:\n${pdfName}`
+  );
+
+  window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
+
+  setTimeout(() => {
+    openFilePicker();
+  }, 800);
+}
+
+function openFilePicker() {
+  document.getElementById("attachPicker").click();
+}
+
+/* -----------------------------------------------------------
+   STATUS CLICK HANDLERS
+----------------------------------------------------------- */
+function initStatusHandlers() {
+  document.querySelectorAll(".status-group").forEach(group => {
+    const key = group.dataset.key;
+
+    group.querySelectorAll(".status-option").forEach(option => {
+      option.addEventListener("click", () => {
+        const status = option.dataset.status;
+
+        appState[key] = appState[key] || {};
+        appState[key].status = status;
+        saveState(appState);
+
+        group.querySelectorAll(".status-circle").forEach(c =>
+          c.classList.remove("selected")
+        );
+        option.querySelector(".status-circle").classList.add("selected");
+
+        updateSectionPills();
+      });
+    });
+  });
+
+  document.querySelectorAll("textarea[data-note]").forEach(area => {
+    const key = area.dataset.note;
+    area.addEventListener("input", () => {
+      appState[key] = appState[key] || {};
+      appState[key].note = area.value;
+      saveState(appState);
+    });
+  });
+}
+
+/* -----------------------------------------------------------
+   RESET BUTTON
+----------------------------------------------------------- */
+document.getElementById("resetBtn").addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+/* -----------------------------------------------------------
+   PDF OPTIONS
+----------------------------------------------------------- */
+const pdfOptions = {
+  margin: 0,
+  filename: "inspection.pdf",
+  image: { type: "jpeg", quality: 0.98 },
+  html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+  jsPDF: { unit: "pt", format: "letter", orientation: "portrait" }
+};
+
+/* -----------------------------------------------------------
+   GENERATE PDF BUTTON
+----------------------------------------------------------- */
+document.getElementById("pdfBtn").addEventListener("click", () => {
+  html2pdf()
+    .set(pdfOptions)
+    .from(document.getElementById("pdfCaptureArea"))
+    const phone = (document.getElementById("custPhone").value || "").replace(/\D+/g, "");
+    const name = (document.getElementById("custName").value || "").trim().replace(/\s+/g, "_");
+    const today = new Date().toISOString().split("T")[0];
+    const fileName = `${phone}_${name}_${today}.pdf`;
+    html2pdf()
+      .set(pdfOptions)
+      .from(document.getElementById("pdfCaptureArea"))
+      .save(fileName);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Add Recommendation Row
+  document.getElementById("addRecBtn").addEventListener("click", () => {
+    const container = document.getElementById("recommendationsContainer");
+
+    const row = document.createElement("div");
+    row.className = "rec-row";
+
+    row.innerHTML = `
+      <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
+      <input class="rec-cost" placeholder="Cost" />
+      <button class="rec-remove">x</button>
+    `;
+
+    container.appendChild(row);
+  });
+
+  // Remove Recommendation Row (event delegation)
+  document.getElementById("recommendationsContainer").addEventListener("click", (e) => {
+    if (e.target.classList.contains("rec-remove")) {
+      e.target.parentElement.remove();
+    }
+  });
+
+});
+
+/* -----------------------------------------------------------
+   EMAIL PDF (Hybrid Workflow)
+----------------------------------------------------------- */
+document.getElementById("emailBtn").addEventListener("click", async () => {
+  const phone = (document.getElementById("custPhone").value || "").replace(/\D+/g, "");
+  const name = (document.getElementById("custName").value || "").trim().replace(/\s+/g, "_");
+  const today = new Date().toISOString().split("T")[0];
+
+  const pdfName = `${phone}_${name}_${today}.pdf`;
+
+  await html2pdf()
+    .set(pdfOptions)
+    .from(document.getElementById("pdfCaptureArea"))
+    .save(pdfName);
+
+  openPrefilledEmail(pdfName);
+});
+
+/* -----------------------------------------------------------
+   INITIALIZE APP
+----------------------------------------------------------- */
+buildSections();
+initStatusHandlers();
+initSignaturePads();
+updateSectionPills();
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<input type="file" id="attachPicker" style="display:none" />
+</body>
+</html>
+
