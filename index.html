@@ -447,7 +447,6 @@
   right: 0;
   width: 200px;
   margin: 0 auto;
-  top: calc(var(--rec-anchor-top) + 10px);
   z-index: 10; /* ensures it stays clickable */
 }
 
@@ -1038,8 +1037,13 @@ document.getElementById("emailBtn").addEventListener("click", async () => {
 
 function updateAddRecButtonPosition() {
   const anchor = document.getElementById("recAnchor");
-  const rect = anchor.getBoundingClientRect();
-  document.documentElement.style.setProperty("--rec-anchor-top", rect.top + "px");
+  const section = document.getElementById("recommendationsSection");
+  const button = document.getElementById("addRecBtn");
+
+  // Position relative to the Recommendations section
+  const offset = anchor.offsetTop;
+
+  button.style.top = (section.offsetTop + offset + 10) + "px";
 }
 
 // Initial position
@@ -1069,6 +1073,7 @@ document.addEventListener("click", (e) => {
     updateAddRecButtonPosition();
   }
 });
+
 
 /* -----------------------------------------------------------
    INITIALIZE APP
