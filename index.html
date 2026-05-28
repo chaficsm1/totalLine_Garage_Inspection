@@ -430,17 +430,25 @@
   resize: vertical;    /* Still allows expanding if needed */
 }
 
-##recommendationsSection {
+/* Recommendations section must be a positioning context */
+#recommendationsSection {
   position: relative;
 }
 
+/* Ghost anchor — invisible but used for positioning */
+#recAnchor {
+  height: 1px;
+}
+
+/* Add Recommendation button — visually placed under last row */
 #addRecBtn {
   position: absolute;
   left: 0;
   right: 0;
-  margin: 0 auto;
   width: 200px;
+  margin: 0 auto;
   top: calc(var(--rec-anchor-top) + 10px);
+  z-index: 10; /* ensures it stays clickable */
 }
 
 
@@ -525,6 +533,7 @@
   <div id="sectionsContainer"></div>
 
 
+
 <!-- RECOMMENDATIONS SECTION -->
 <div class="section-band">
   <div class="section-band-title">Recommendations</div>
@@ -538,8 +547,9 @@
       <button class="rec-remove">×</button>
     </div>
   </div>
+
+  <!-- Ghost anchor (inside PDF area, invisible, used for positioning) -->
   <div id="recAnchor"></div>
-  
 </div>
 
 
@@ -570,12 +580,13 @@
 </div>
 <!-- PDF CAPTURE AREA END -->
 
-      <div class="actions">
-        <button id="addRecBtn" class="add-row-btn">+ Add Recommendation</button>
-        <button id="resetBtn" class="btn btn-secondary">Reset</button>
-        <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
-        <button id="emailBtn" class="btn btn-primary">Email PDF</button>
-      </div>
+  <div class="actions">
+  <button id="addRecBtn" class="add-row-btn">+ Add Recommendation</button>
+  <button id="resetBtn" class="btn btn-secondary">Reset</button>
+  <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
+  <button id="emailBtn" class="btn btn-primary">Email PDF</button>
+  </div>
+
 
 <script>
 /* -----------------------------------------------------------
@@ -1031,15 +1042,30 @@ function updateAddRecButtonPosition() {
   document.documentElement.style.setProperty("--rec-anchor-top", rect.top + "px");
 }
 
-// Update on load and whenever rows change
+// Initial position
 updateAddRecButtonPosition();
 
+// Add row
 document.getElementById("addRecBtn").addEventListener("click", () => {
+  const container = document.getElementById("recommendationsContainer");
+
+  const row = document.createElement("div");
+  row.className = "rec-row";
+
+  row.innerHTML = `
+    <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
+    <input class="rec-cost" placeholder="Cost" />
+    <button class="rec-remove">×</button>
+  `;
+
+  container.appendChild(row);
   updateAddRecButtonPosition();
 });
 
+// Remove row
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("rec-remove")) {
+    e.target.parentElement.remove();
     updateAddRecButtonPosition();
   }
 });
