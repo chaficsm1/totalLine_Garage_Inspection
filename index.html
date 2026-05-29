@@ -871,26 +871,25 @@ function initSignaturePads() {
 function openPrefilledEmail(pdfName) {
   const to = document.getElementById("custEmail").value || "";
   const cc = "office@yourcompany.com";
+
   const subject = encodeURIComponent("Garage Door Inspection Report");
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  // Build plain-text body with real newlines
-  let bodyText = "Attached is your inspection report.\n\n";
-
-  if (isIOS) {
-    bodyText += `If the file picker does not open automatically, tap the attachment icon and select:\n${pdfName}\n\n`;
-  }
+  const bodyText =
+    "Attached is your inspection report.\n\n" +
+    "If the file picker does not open automatically, tap the attachment icon and select:\n" +
+    pdfName + "\n\n";
 
   const body = encodeURIComponent(bodyText);
 
-  window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
+  // This is the key line that fixes the missing "To:" field
+  const mailto = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
 
-  if (isIOS) {
-    setTimeout(() => {
-      openFilePicker();
-    }, 800);
-  }
+  window.location.href = mailto;
+
+  // iPad-only attachment picker
+  setTimeout(() => {
+    document.getElementById("attachPicker").click();
+  }, 800);
 }
 
 
