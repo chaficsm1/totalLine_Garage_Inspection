@@ -564,6 +564,34 @@
       </div>
 
 <script>
+function pdfOptions(filename) {
+  return {
+    margin: 10,
+    filename,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: "pt", format: "letter", orientation: "portrait" },
+    pagebreak: { mode: ["css", "legacy"] }
+  };
+}
+
+function buildPdfName() {
+  const phone = (document.getElementById("custPhone").value || "")
+    .replace(/\D/g, "") || "no-phone";
+
+  const name = (document.getElementById("custName").value || "no-name")
+    .trim()
+    .replace(/\s+/g, "_");
+
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+
+  return `${phone}_${name}_${yyyy}${mm}${dd}.pdf`;
+}
+
+ 
 /* -----------------------------------------------------------
    STATE + SECTION CONFIG
 ----------------------------------------------------------- */
@@ -865,36 +893,6 @@ function initSignaturePads() {
 }
 
 /* -----------------------------------------------------------
-   HYBRID EMAIL WORKFLOW FUNCTIONS
------------------------------------------------------------ */
-
-function openPrefilledEmail(pdfName) {
-  const to = document.getElementById("custEmail").value || "";
-  const cc = "a2zproservices@gmail.com";
-
-  const subject = encodeURIComponent("Garage Door Inspection Report");
-
-  const bodyText =
-    "Attached is your inspection report.\n\n" +
-    "If the file picker does not open automatically, tap the attachment icon and select:\n" +
-    pdfName + "\n\n";
-
-  const body = encodeURIComponent(bodyText);
-
-  // This is the key line that fixes the missing "To:" field
-  const mailto = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
-
-  window.location.href = mailto;
-
-  // iPad-only attachment picker
-  setTimeout(() => {
-    document.getElementById("attachPicker").click();
-  }, 800);
-}
-
-
-
-/* -----------------------------------------------------------
    STATUS CLICK HANDLERS
 ----------------------------------------------------------- */
 function initStatusHandlers() {
@@ -937,78 +935,54 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   location.reload();
 });
 
-/* -----------------------------------------------------------
-   PDF OPTIONS
------------------------------------------------------------ */
-const pdfOptions = {
-  margin: 0,
-  filename: "inspection.pdf",
-  image: { type: "jpeg", quality: 0.98 },
-  html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-  jsPDF: { unit: "pt", format: "letter", orientation: "portrait" }
-};
 
-/* -----------------------------------------------------------
-   GENERATE PDF BUTTON
------------------------------------------------------------ */
+// PDF button
 document.getElementById("pdfBtn").addEventListener("click", () => {
+  const element = document.getElementById("pdfCaptureArea");
+  const pdfName = buildPdfName();
+  const opt = pdfOptions(pdfName);
+
+  html2pdf().set(opt).from(element).save();
+});
+
+// Generate PDF then open email
+document.getElementById("emailBtn").addEventListener("click", () => {
+  const element = document.getElementById("pdfCaptureArea");
+  const pdfName = buildPdfName();
+  const opt = pdfOptions(pdfName);
+
+  // Capture email BEFORE rendering (Safari + Live Server fix)
+  const emailTo = document.getElementById("custEmail").value || "";
+
   html2pdf()
-    .set(pdfOptions)
-    .from(document.getElementById("pdfCaptureArea"))
-    const phone = (document.getElementById("custPhone").value || "").replace(/\D+/g, "");
-    const name = (document.getElementById("custName").value || "").trim().replace(/\s+/g, "_");
-    const today = new Date().toISOString().split("T")[0];
-    const fileName = `${phone}_${name}_${today}.pdf`;
-    html2pdf()
-      .set(pdfOptions)
-      .from(document.getElementById("pdfCaptureArea"))
-      .save(fileName);
+    .set(opt)
+    .from(element)
+    .save()
+    .then(() => openPrefilledEmail(pdfName, emailTo))
+    .catch(() => openPrefilledEmail(pdfName, emailTo)); // fallback
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-
-  // Add Recommendation Row
-  document.getElementById("addRecBtn").addEventListener("click", () => {
-    const container = document.getElementById("recommendationsContainer");
-
-    const row = document.createElement("div");
-    row.className = "rec-row";
-
-    row.innerHTML = `
-      <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
-      <input class="rec-cost" placeholder="Cost" />
-      <button class="rec-remove">x</button>
-    `;
-
-    container.appendChild(row);
-  });
-
-  // Remove Recommendation Row (event delegation)
-  document.getElementById("recommendationsContainer").addEventListener("click", (e) => {
-    if (e.target.classList.contains("rec-remove")) {
-      e.target.parentElement.remove();
-    }
-  });
-
-});
 
 /* -----------------------------------------------------------
-   EMAIL PDF (Hybrid Workflow)
+   HYBRID EMAIL WORKFLOW FUNCTIONS
 ----------------------------------------------------------- */
-document.getElementById("emailBtn").addEventListener("click", async () => {
-  const phone = (document.getElementById("custPhone").value || "").replace(/\D+/g, "");
-  const name = (document.getElementById("custName").value || "").trim().replace(/\s+/g, "_");
-  const today = new Date().toISOString().split("T")[0];
+function openPrefilledEmail(pdfName, to) {
+  const cc = "a2zproservices@gmail.com";
 
-  const pdfName = `${phone}_${name}_${today}.pdf`;
+  const subject = encodeURIComponent("Garage Door Inspection Report");
 
-  await html2pdf()
-    .set(pdfOptions)
-    .from(document.getElementById("pdfCaptureArea"))
-    .save(pdfName);
+  const bodyText =
+    "Attached is your inspection report.\n\n" +
+    "If the file picker does not open automatically, tap the attachment icon and select:\n" +
+    pdfName + "\n\n";
 
-  openPrefilledEmail(pdfName);
-});
+  const body = encodeURIComponent(bodyText);
+
+  window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
+
+  const picker = document.getElementById("attachPicker");
+  if (picker) setTimeout(() => picker.click(), 800);
+}
 
 
 /* -----------------------------------------------------------
@@ -1016,6 +990,65 @@ document.getElementById("emailBtn").addEventListener("click", async () => {
 ----------------------------------------------------------- */
 buildSections();
 initStatusHandlers();
+initSignaturePads();
+updateSectionPills();
+
+/* -----------------------------------------------------------
+   RECOMMENDATIONS SECTION
+----------------------------------------------------------- */
+
+document.getElementById("addRecBtn").addEventListener("click", () => {
+  const list = document.getElementById("recList");
+
+  const row = document.createElement("div");
+  row.className = "rec-row";
+
+  row.innerHTML = `
+    <input type="text" class="rec-text" placeholder="Recommendation..." />
+    <button class="rec-delete">X</button>
+  `;
+
+  list.appendChild(row);
+
+  row.querySelector(".rec-delete").addEventListener("click", () => {
+    row.remove();
+  });
+});
+
+
+/* -----------------------------------------------------------
+   PDF BUTTON
+----------------------------------------------------------- */
+
+document.getElementById("pdfBtn").addEventListener("click", () => {
+  const pdfName = buildPdfName();
+  const element = document.getElementById("pdfCaptureArea");
+
+  html2pdf()
+    .set(pdfOptions(pdfName))
+    .from(element)
+    .save();
+});
+
+
+/* -----------------------------------------------------------
+   EMAIL BUTTON
+----------------------------------------------------------- */
+
+document.getElementById("emailBtn").addEventListener("click", () => {
+  const pdfName = buildPdfName();
+  const to = document.getElementById("custEmail").value || "";
+  openPrefilledEmail(pdfName, to);
+});
+
+
+/* -----------------------------------------------------------
+   FINAL INITIALIZATION
+----------------------------------------------------------- */
+
+buildSections();
+bindEvents();
+bindJobInfo();
 initSignaturePads();
 updateSectionPills();
 
