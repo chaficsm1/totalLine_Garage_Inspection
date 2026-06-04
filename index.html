@@ -1042,20 +1042,30 @@ emailBtn.addEventListener("click", () => {
   const to = document.getElementById("custEmail").value || "";
   const el = document.getElementById("pdfCaptureArea");
 
-  // Generate PDF as a Blob instead of auto-opening viewer
   html2pdf()
     .set(pdfOptions(pdfName))
     .from(el)
     .outputPdf("blob")
     .then((blob) => {
-      // Save the PDF manually without opening the viewer
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = pdfName;
-      link.click();
+      const url = URL.createObjectURL(blob);
 
-      // After save completes, open Mail
-      setTimeout(() => openPrefilledEmail(pdfName, to), 300);
+      // Force Safari to download instead of preview
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = pdfName;
+      link.rel = "noopener";
+      link.target = "_blank";
+
+      // Synthetic click event (Safari-safe)
+      const clickEvent = new MouseEvent("click", {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      link.dispatchEvent(clickEvent);
+
+      // Give Safari time to finish the download
+      setTimeout(() => openPrefilledEmail(pdfName, to), 500);
     });
 });
   }
