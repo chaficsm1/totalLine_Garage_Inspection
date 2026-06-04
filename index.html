@@ -178,17 +178,21 @@
       text-transform: uppercase;
     }
 
-    .section-status-pass {
-      background: #2e7d32 !important;
-    }
+    .section-status-pill.pill-pass {
+  background: var(--pass-green);
+  color: white;
+}
 
-    .section-status-fail {
-      background: #c62828 !important;
-    }
+.section-status-pill.pill-fail {
+  background: var(--fail-red);
+  color: white;
+}
 
-    .section-status-pending {
-      background: #9ca3af !important;
-    }
+.section-status-pill.pill-pending {
+  background-color: #a7a9ad !important;
+  color: white !important;
+}
+
 
     .item-row-horizontal {
       display: grid;
@@ -436,7 +440,6 @@
   <div class="app" id="appRoot">
    <!-- PDF CAPTURE AREA START -->
 <div id="pdfCaptureArea">
-
   <div class="header">
   <div class="header-left">
 <img src="https://raw.githubusercontent.com/chaficsm1/totalLine_Garage/main/garage.png"
@@ -517,7 +520,7 @@
 </div>
 
 <div class="section" id="recommendationsSection">
-  <div id="recommendationsContainer">
+  <div id="recList">
     <div class="rec-row">
       <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
       <input class="rec-cost" placeholder="Cost" />
@@ -559,312 +562,360 @@
 
       <div class="actions">
         <button id="resetBtn" class="btn btn-secondary">Reset</button>
-        <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
-        <button id="emailBtn" class="btn btn-primary">Email PDF</button>
+        <button id="pdfBtn" class="action-btn">Generate PDF</button>
+<button id="emailBtn" class="action-btn">Email PDF</button>
+
       </div>
+    
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
-function pdfOptions(filename) {
-  return {
-    margin: 10,
-    filename,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-    jsPDF: { unit: "pt", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"] }
-  };
-}
+/* ============================================================
+   STORAGE
+============================================================ */
 
-function buildPdfName() {
-  const phone = (document.getElementById("custPhone").value || "")
-    .replace(/\D/g, "") || "no-phone";
-
-  const name = (document.getElementById("custName").value || "no-name")
-    .trim()
-    .replace(/\s+/g, "_");
-
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const yyyy = d.getFullYear();
-
-  return `${phone}_${name}_${yyyy}${mm}${dd}.pdf`;
-}
-
- 
-/* -----------------------------------------------------------
-   STATE + SECTION CONFIG
------------------------------------------------------------ */
-
-const STORAGE_KEY = "totalLineInspection_v1";
-
-const sectionsConfig = [
-  {
-    id: "doorHardware",
-    title: "Door Hardware",
-    items: [
-      "Hinges",
-      "Rollers",
-      "Tracks",
-      "Cables",
-      "Drums",
-      "Shaft",
-      "Center Bearing Plate",
-      "End Bearing Plates"
-    ]
-  },
-  {
-    id: "springs",
-    title: "Springs",
-    items: [
-      "Torsion Springs",
-      "Extension Springs",
-      "Spring Anchor",
-      "Spring Cones",
-      "Spring Tension"
-    ]
-  },
-  {
-    id: "opener",
-    title: "Opener System",
-    items: [
-      "Motor Unit",
-      "Rail Assembly",
-      "Trolley",
-      "Safety Sensors",
-      "Wall Console",
-      "Remote Controls",
-      "Emergency Release"
-    ]
-  },
-  {
-    id: "doorPanels",
-    title: "Door Panels",
-    items: [
-      "Panel Condition",
-      "Insulation",
-      "Weatherstripping",
-      "Bottom Seal",
-      "Window Inserts"
-    ]
-  }
-];
-
-/* -----------------------------------------------------------
-   LOAD / SAVE STATE
------------------------------------------------------------ */
+const STORAGE_KEY = "totalLine_inspection_v1";
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : {};
+  return raw ? JSON.parse(raw) : { job:{}, statuses:{}, notes:{} };
 }
 
-function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 }
 
 let appState = loadState();
 
-/* -----------------------------------------------------------
+/* ============================================================
+   JOB INFO
+============================================================ */
+
+const jobFields = [
+  "custName","custStreet","custCity","custZip",
+  "custPhone","custEmail",
+  "techName","techPhone","techEmail"
+];
+
+function loadJobInfo() {
+  jobFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (appState.job[id] !== undefined) el.value = appState.job[id];
+  });
+}
+
+function bindJobInfo() {
+  jobFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", () => {
+      appState.job[id] = el.value;
+      saveState();
+    });
+  });
+}
+
+/* ============================================================
+   12‑SECTION CONFIG
+============================================================ */
+
+const sectionsConfig = [
+  { id:"doorPanels", title:"Door Panels & Appearance", items:[
+    "Panel Condition","Dents / Damage","Rust / Corrosion","Window Inserts",
+    "Insulation","Bottom Seal","Weatherstripping","General Appearance"
+  ]},
+  { id:"hardware", title:"Hardware & Fasteners", items:[
+    "Hinges","Hinge Pins","Fasteners Tight","Brackets","Struts",
+    "Top Fixtures","Bottom Fixtures","General Hardware Condition"
+  ]},
+  { id:"rollers", title:"Rollers", items:[
+    "Roller Condition","Roller Bearings","Roller Shafts","Roller Wear",
+    "Roller Noise","Roller Alignment","Lubrication","General Roller Condition"
+  ]},
+  { id:"tracks", title:"Tracks", items:[
+    "Vertical Tracks","Horizontal Tracks","Track Alignment","Track Fasteners",
+    "Track Wear","Track Cleanliness","Track Spacing","General Track Condition"
+  ]},
+  { id:"springs", title:"Springs", items:[
+    "Torsion Springs","Extension Springs","Spring Anchor","Spring Cones",
+    "Spring Tension","Center Bearing Plate","End Bearing Plates",
+    "Shaft Condition","Drums","Cables","General Spring Condition"
+  ]},
+  { id:"cables", title:"Cables & Pulleys", items:[
+    "Cable Condition","Cable Fraying","Cable Drum Wrap","Cable Tension",
+    "Pulleys","Pulley Bearings","Pulley Alignment","General Cable Condition"
+  ]},
+  { id:"weather", title:"Weather Seals & Insulation", items:[
+    "Bottom Seal","Side Seals","Top Seal","Panel Insulation",
+    "Thermal Efficiency","Air Gaps","Seal Wear","General Weather Seal Condition"
+  ]},
+  { id:"safety", title:"Safety Features", items:[
+    "Photo Eyes","Photo Eye Alignment","Photo Eye Wiring","Auto‑Reverse Test",
+    "Force Setting","Emergency Release","Manual Operation","Safety Labels",
+    "General Safety Condition","UL‑325 Compliance"
+  ]},
+  { id:"opener", title:"Opener Unit", items:[
+    "Motor Unit","Rail Assembly","Trolley","Belt / Chain","Travel Limits",
+    "Force Settings","Light Operation","Cover Condition",
+    "General Opener Condition","Noise Level"
+  ]},
+  { id:"controls", title:"Controls & Connectivity", items:[
+    "Wall Console","Remote Controls","Keypad","WiFi Connectivity",
+    "App Control","Battery Backup","Wiring Condition",
+    "General Control Condition","Programming","Signal Strength"
+  ]},
+  { id:"power", title:"Power & Electrical", items:[
+    "Power Cord","Outlet Condition","GFCI","Voltage","Wiring",
+    "Conduit","Breaker","General Electrical Condition"
+  ]},
+  { id:"operation", title:"Operational Test", items:[
+    "Smooth Operation","Noise Level","Balance Test","Manual Lift",
+    "Auto‑Reverse","Full Cycle Test","Open Speed","Close Speed",
+    "General Operation"
+  ]}
+];
+
+/* ============================================================
    BUILD SECTIONS
------------------------------------------------------------ */
+============================================================ */
 
 function buildSections() {
   const container = document.getElementById("sectionsContainer");
   container.innerHTML = "";
 
   sectionsConfig.forEach(section => {
+    const wrap = document.createElement("div");
+    wrap.className = "section-wrapper";
+    wrap.dataset.sectionId = section.id;
+
     const band = document.createElement("div");
     band.className = "section-band";
-    band.innerHTML = `
-      <div class="section-band-title">${section.title}</div>
-      <div class="section-status-pill" id="pill-${section.id}">Pending</div>
-    `;
-    container.appendChild(band);
 
-    section.items.forEach(item => {
+    const title = document.createElement("div");
+    title.className = "section-band-title";
+    title.textContent = section.title;
+
+    const pill = document.createElement("div");
+    pill.className = "section-status-pill";
+    pill.textContent = "Not Started";
+
+    band.appendChild(title);
+    band.appendChild(pill);
+
+    const sec = document.createElement("div");
+    sec.className = "section";
+
+    section.items.forEach((label, index) => {
       const row = document.createElement("div");
       row.className = "item-row-horizontal";
+      row.dataset.sectionId = section.id;
+      row.dataset.itemIndex = index;
 
-      const itemKey = `${section.id}_${item.replace(/\s+/g, "")}`;
+      const left = document.createElement("div");
+      left.className = "item-label";
+      left.textContent = label;
 
-      const saved = appState[itemKey] || { status: "", note: "" };
+      const mid = document.createElement("div");
+      mid.className = "status-group";
 
-      row.innerHTML = `
-        <div class="item-label">${item}</div>
+      ["pass","fail","na"].forEach(type => {
+        const opt = document.createElement("div");
+        opt.className = "status-option";
+        opt.dataset.status = type;
 
-        <div class="status-group" data-key="${itemKey}">
-          <div class="status-option" data-status="pass">
-            <div class="status-circle pass ${saved.status === "pass" ? "selected" : ""}">
-              <div class="status-circle-inner"></div>
-            </div>
-            Pass
-          </div>
+        const circle = document.createElement("div");
+        circle.className = `status-circle ${type}`;
+        circle.dataset.statusType = type;
 
-          <div class="status-option" data-status="fail">
-            <div class="status-circle fail ${saved.status === "fail" ? "selected" : ""}">
-              <div class="status-circle-inner"></div>
-            </div>
-            Fail
-          </div>
+        const inner = document.createElement("div");
+        inner.className = "status-circle-inner";
 
-          <div class="status-option" data-status="na">
-            <div class="status-circle na ${saved.status === "na" ? "selected" : ""}">
-              <div class="status-circle-inner"></div>
-            </div>
-            N/A
-          </div>
-        </div>
+        circle.appendChild(inner);
+        opt.appendChild(circle);
+        opt.append(type.toUpperCase());
 
-        <div class="note-right">
-          <textarea data-note="${itemKey}" placeholder="Notes...">${saved.note || ""}</textarea>
-        </div>
-      `;
+        mid.appendChild(opt);
+      });
 
-      container.appendChild(row);
+      const right = document.createElement("div");
+      right.className = "note-right";
+
+      const note = document.createElement("textarea");
+      note.className = "item-note";
+      note.placeholder = "Notes...";
+
+      right.appendChild(note);
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
+      sec.appendChild(row);
     });
+
+    wrap.appendChild(band);
+    wrap.appendChild(sec);
+    container.appendChild(wrap);
   });
 }
 
-/* -----------------------------------------------------------
-   UPDATE SECTION STATUS PILLS
------------------------------------------------------------ */
+/* ============================================================
+Format cost field as currency
+============================================================ */
+document.addEventListener("blur", (e) => {
+  if (e.target.classList.contains("rec-cost")) {
+    let raw = e.target.value.replace(/[^0-9.]/g, "");
 
-function updateSectionPills() {
-  sectionsConfig.forEach(section => {
-    const pill = document.getElementById(`pill-${section.id}`);
-    let hasFail = false;
-    let hasPass = false;
-
-    section.items.forEach(item => {
-      const key = `${section.id}_${item.replace(/\s+/g, "")}`;
-      const saved = appState[key];
-      if (!saved) return;
-
-      if (saved.status === "fail") hasFail = true;
-      if (saved.status === "pass") hasPass = true;
-    });
-
-    if (hasFail) {
-      pill.textContent = "Fail";
-      pill.className = "section-status-pill section-status-fail";
-    } else if (hasPass) {
-      pill.textContent = "Pass";
-      pill.className = "section-status-pill section-status-pass";
-    } else {
-      pill.textContent = "Pending";
-      pill.className = "section-status-pill section-status-pending";
+    if (raw === "") {
+      e.target.value = "";
+      return;
     }
+
+    let num = parseFloat(raw);
+    if (!isNaN(num)) {
+      e.target.value = num.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD"
+      });
+    }
+  }
+}, true);
+
+/* ============================================================
+   APPLY SAVED STATE
+============================================================ */
+
+function applySavedInspectionState() {
+  Object.keys(appState.statuses).forEach(key => {
+    const { sectionId, index } = JSON.parse(key);
+    const row = document.querySelector(
+      `.item-row-horizontal[data-section-id="${sectionId}"][data-item-index="${index}"]`
+    );
+    if (!row) return;
+
+    const status = appState.statuses[key];
+    const circle = row.querySelector(`.status-circle.${status}`);
+    if (circle) circle.classList.add("selected");
   });
+
+  Object.keys(appState.notes).forEach(key => {
+    const { sectionId, index } = JSON.parse(key);
+    const row = document.querySelector(
+      `.item-row-horizontal[data-section-id="${sectionId}"][data-item-index="${index}"]`
+    );
+    if (!row) return;
+
+    const note = row.querySelector(".item-note");
+    if (note) note.value = appState.notes[key];
+  });
+
+  updateSectionPills();
 }
 
-/* -----------------------------------------------------------
-   EVENT BINDING
------------------------------------------------------------ */
+/* ============================================================
+   INSPECTION EVENTS
+============================================================ */
 
-function bindEvents() {
-  document.querySelectorAll(".status-option").forEach(opt => {
-    opt.addEventListener("click", () => {
-      const key = opt.parentElement.dataset.key;
-      const status = opt.dataset.status;
+function bindInspectionEvents() {
+  document.querySelectorAll(".status-option").forEach(option => {
+    option.addEventListener("click", () => {
+      const row = option.closest(".item-row-horizontal");
+      const sectionId = row.dataset.sectionId;
+      const index = parseInt(row.dataset.itemIndex, 10);
 
-      appState[key] = appState[key] || {};
-      appState[key].status = status;
-      saveState(appState);
+      row.querySelectorAll(".status-circle").forEach(c => c.classList.remove("selected"));
 
-      opt.parentElement.querySelectorAll(".status-circle").forEach(c => c.classList.remove("selected"));
-      opt.querySelector(".status-circle").classList.add("selected");
+      const circle = option.querySelector(".status-circle");
+      circle.classList.add("selected");
+
+      const key = JSON.stringify({ sectionId, index });
+      appState.statuses[key] = circle.dataset.statusType;
+      saveState();
 
       updateSectionPills();
     });
   });
 
-  document.querySelectorAll("textarea[data-note]").forEach(area => {
-    area.addEventListener("input", () => {
-      const key = area.dataset.note;
-      appState[key] = appState[key] || {};
-      appState[key].note = area.value;
-      saveState(appState);
+  document.querySelectorAll(".item-note").forEach(note => {
+    note.addEventListener("input", () => {
+      const row = note.closest(".item-row-horizontal");
+      const sectionId = row.dataset.sectionId;
+      const index = parseInt(row.dataset.itemIndex, 10);
+      const key = JSON.stringify({ sectionId, index });
+      appState.notes[key] = note.value;
+      saveState();
     });
   });
 }
 
-/* -----------------------------------------------------------
-   SAVE + LOAD JOB INFORMATION FIELDS 
------------------------------------------------------------ */
+/* ============================================================
+   SECTION PILL LOGIC
+============================================================ */
 
-function loadJobInfo() {
-  const fields = [
-    "custName",
-    "custStreet",
-    "custCity",
-    "custState",
-    "custZip",
-    "custPhone",
-    "techName",
-    "techPhone",
-    "techEmail",
-    "companyPhone",
-    "companyEmail",
-  ];
+function updateSectionPills() {
+  sectionsConfig.forEach(section => {
+    const wrap = document.querySelector(`.section-wrapper[data-section-id="${section.id}"]`);
+    if (!wrap) return;
 
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const saved = appState[id];
-    if (saved !== undefined) el.value = saved;
-  });
-}
+    const pill = wrap.querySelector(".section-status-pill");
+    const rows = wrap.querySelectorAll(".item-row-horizontal");
 
-function bindJobInfo() {
-  const fields = [
-    "custName",
-    "custStreet",
-    "custCity",
-    "custState",
-    "custZip",
-    "custPhone",
-    "techName",
-    "techPhone",
-    "techEmail",
-    "companyPhone",
-    "companyEmail",
-  ];
+    let anyFail = false;
+    let anyPass = false;
+    let anySet = false;
 
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("input", () => {
-      appState[id] = el.value;
-      saveState(appState);
+    rows.forEach(row => {
+      const sel = row.querySelector(".status-circle.selected");
+      if (!sel) return;
+
+      anySet = true;
+      const type = sel.dataset.statusType;
+
+      if (type === "fail") anyFail = true;
+      if (type === "pass") anyPass = true;
     });
+
+    // Reset classes
+    pill.classList.remove("pill-pass","pill-fail","pill-pending");
+
+    if (!anySet) {
+      pill.textContent = "PENDING";
+      pill.classList.add("pill-pending");
+    } else if (anyFail) {
+      pill.textContent = "FAIL";
+      pill.classList.add("pill-fail");
+    } else if (anyPass) {
+      pill.textContent = "PASS";
+      pill.classList.add("pill-pass");
+    } else {
+      pill.textContent = "PENDING";
+      pill.classList.add("pill-pending");
+    }
   });
 }
 
-loadJobInfo();
-bindJobInfo();
+/* ============================================================
+   RECOMMENDATIONS
+============================================================ */
 
-/* -----------------------------------------------------------
-   RESET FORM
------------------------------------------------------------ */
+function bindExistingRecRemovers() {
+  document.querySelectorAll(".rec-remove").forEach(btn => {
+    btn.onclick = () => btn.parentElement.remove();
+  });
+}
 
-document.getElementById("resetBtn").addEventListener("click", () => {
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-});
+/* ============================================================
+   SIGNATURES
+============================================================ */
 
-/* -----------------------------------------------------------
-   EMAIL PDF (iPad Share Sheet → Mail)
------------------------------------------------------------ */
-
-/* -----------------------------------------------------------
-   SIGNATURE PADS
------------------------------------------------------------ */
 function initSignaturePads() {
-  ["sigTech", "sigCust"].forEach(id => {
+  ["sigTech","sigCust"].forEach(id => {
     const canvas = document.getElementById(id);
-    const ctx = canvas.getContext("2d");
+    if (!canvas) return;
 
+    const ctx = canvas.getContext("2d");
     let drawing = false;
 
     canvas.addEventListener("pointerdown", e => {
@@ -879,104 +930,58 @@ function initSignaturePads() {
       ctx.stroke();
     });
 
-    canvas.addEventListener("pointerup", () => (drawing = false));
-    canvas.addEventListener("pointerleave", () => (drawing = false));
+    canvas.addEventListener("pointerup", () => drawing = false);
+    canvas.addEventListener("pointerleave", () => drawing = false);
   });
 
   document.querySelectorAll("[data-clear]").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-clear");
       const canvas = document.getElementById(id);
+      if (!canvas) return;
       canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
     });
   });
 }
 
-/* -----------------------------------------------------------
-   STATUS CLICK HANDLERS
------------------------------------------------------------ */
-function initStatusHandlers() {
-  document.querySelectorAll(".status-group").forEach(group => {
-    const key = group.dataset.key;
+/* ============================================================
+   PDF + EMAIL
+============================================================ */
 
-    group.querySelectorAll(".status-option").forEach(option => {
-      option.addEventListener("click", () => {
-        const status = option.dataset.status;
-
-        appState[key] = appState[key] || {};
-        appState[key].status = status;
-        saveState(appState);
-
-        group.querySelectorAll(".status-circle").forEach(c =>
-          c.classList.remove("selected")
-        );
-        option.querySelector(".status-circle").classList.add("selected");
-
-        updateSectionPills();
-      });
-    });
-  });
-
-  document.querySelectorAll("textarea[data-note]").forEach(area => {
-    const key = area.dataset.note;
-    area.addEventListener("input", () => {
-      appState[key] = appState[key] || {};
-      appState[key].note = area.value;
-      saveState(appState);
-    });
-  });
+function pdfOptions(filename) {
+  return {
+    margin: 10,
+    filename,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: "pt", format: "letter", orientation: "portrait" },
+    pagebreak: { mode: ["css","legacy"] }
+  };
 }
 
-/* -----------------------------------------------------------
-   RESET BUTTON
------------------------------------------------------------ */
-document.getElementById("resetBtn").addEventListener("click", () => {
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-});
+function buildPdfName() {
+  const phone = (document.getElementById("custPhone").value || "")
+    .replace(/\D/g,"") || "no-phone";
 
+  const name = (document.getElementById("custName").value || "no-name")
+    .trim().replace(/\s+/g,"_");
 
-// PDF button
-document.getElementById("pdfBtn").addEventListener("click", () => {
-  const element = document.getElementById("pdfCaptureArea");
-  const pdfName = buildPdfName();
-  const opt = pdfOptions(pdfName);
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  const yyyy = d.getFullYear();
 
-  html2pdf().set(opt).from(element).save();
-});
+  return `${phone}_${name}_${yyyy}${mm}${dd}.pdf`;
+}
 
-// Generate PDF then open email
-document.getElementById("emailBtn").addEventListener("click", () => {
-  const element = document.getElementById("pdfCaptureArea");
-  const pdfName = buildPdfName();
-  const opt = pdfOptions(pdfName);
-
-  // Capture email BEFORE rendering (Safari + Live Server fix)
-  const emailTo = document.getElementById("custEmail").value || "";
-
-  html2pdf()
-    .set(opt)
-    .from(element)
-    .save()
-    .then(() => openPrefilledEmail(pdfName, emailTo))
-    .catch(() => openPrefilledEmail(pdfName, emailTo)); // fallback
-});
-
-
-/* -----------------------------------------------------------
-   HYBRID EMAIL WORKFLOW FUNCTIONS
------------------------------------------------------------ */
 function openPrefilledEmail(pdfName, to) {
   const cc = "a2zproservices@gmail.com";
-
   const subject = encodeURIComponent("Garage Door Inspection Report");
-
-  const bodyText =
+  const body = encodeURIComponent(
     "Attached is your inspection report.\n\n" +
     "If the file picker does not open automatically, tap the attachment icon and select:\n" +
-    pdfName + "\n\n";
-
-  const body = encodeURIComponent(bodyText);
+    pdfName + "\n\n"
+  );
 
   window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
 
@@ -984,76 +989,87 @@ function openPrefilledEmail(pdfName, to) {
   if (picker) setTimeout(() => picker.click(), 800);
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  alert("INIT RUNS");
+  console.log("INIT RUNS");
+  // Build UI and bind logic only after DOM is ready
+    console.log("A: buildSections");
+  buildSections();
+    console.log("B: loadJobInfo");
+  loadJobInfo();
+    console.log("C: bindJobInfo");
+  bindJobInfo();
+    console.log("D: applySavedInspectionState");
+  applySavedInspectionState();
+    console.log("E: bindInspectionEvents");
+  bindInspectionEvents();
+    console.log("F: bindExistingRecRemovers");
+  bindExistingRecRemovers();
+    console.log("G: initSignaturePads");
+  initSignaturePads();
 
-/* -----------------------------------------------------------
-   INITIALIZE APP
------------------------------------------------------------ */
-buildSections();
-initStatusHandlers();
-initSignaturePads();
-updateSectionPills();
+    console.log("H: bind addRecBtn");
+  const addRecBtn = document.getElementById("addRecBtn");
+  if (addRecBtn) {
+    addRecBtn.addEventListener("click", () => {
+      const list = document.getElementById("recList");
+      const row = document.createElement("div");
+      row.className = "rec-row";
+      row.innerHTML = `
+        <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
+        <input class="rec-cost" placeholder="Cost" />
+        <button class="rec-remove">×</button>
+      `;
+      list.appendChild(row);
+      row.querySelector(".rec-remove").addEventListener("click", () => row.remove());
+    });
+  }
 
-/* -----------------------------------------------------------
-   RECOMMENDATIONS SECTION
------------------------------------------------------------ */
+    console.log("I: bind pdfBtn");
+  const pdfBtn = document.getElementById("pdfBtn");
+  if (pdfBtn) {
+    pdfBtn.addEventListener("click", () => {
+      const pdfName = buildPdfName();
+      const el = document.getElementById("pdfCaptureArea");
+      html2pdf().set(pdfOptions(pdfName)).from(el).save();
+    });
+  }
 
-document.getElementById("addRecBtn").addEventListener("click", () => {
-  const list = document.getElementById("recList");
-
-  const row = document.createElement("div");
-  row.className = "rec-row";
-
-  row.innerHTML = `
-    <input type="text" class="rec-text" placeholder="Recommendation..." />
-    <button class="rec-delete">X</button>
-  `;
-
-  list.appendChild(row);
-
-  row.querySelector(".rec-delete").addEventListener("click", () => {
-    row.remove();
-  });
-});
-
-
-/* -----------------------------------------------------------
-   PDF BUTTON
------------------------------------------------------------ */
-
-document.getElementById("pdfBtn").addEventListener("click", () => {
-  const pdfName = buildPdfName();
-  const element = document.getElementById("pdfCaptureArea");
-
-  html2pdf()
-    .set(pdfOptions(pdfName))
-    .from(element)
-    .save();
-});
-
-
-/* -----------------------------------------------------------
-   EMAIL BUTTON
------------------------------------------------------------ */
-
-document.getElementById("emailBtn").addEventListener("click", () => {
+    console.log("J: bind emailBtn");
+  const emailBtn = document.getElementById("emailBtn");
+  if (emailBtn) {
+emailBtn.addEventListener("click", () => {
   const pdfName = buildPdfName();
   const to = document.getElementById("custEmail").value || "";
-  openPrefilledEmail(pdfName, to);
+  const el = document.getElementById("pdfCaptureArea");
+
+  // Generate + save PDF ONCE
+  html2pdf()
+    .set(pdfOptions(pdfName))
+    .from(el)
+    .save()
+    .then(() => {
+      // After PDF is saved, open Mail
+      setTimeout(() => openPrefilledEmail(pdfName, to), 300);
+    });
+});
+  }
+
+    console.log("K: bind resetBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    });
+  }
+    console.log("DONE");
 });
 
-
-/* -----------------------------------------------------------
-   FINAL INITIALIZATION
------------------------------------------------------------ */
-
-buildSections();
-bindEvents();
-bindJobInfo();
-initSignaturePads();
-updateSectionPills();
-
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<input type="file" id="attachPicker" style="display:none" />
+<input type="file" id="attachPicker" style="display:none" />
 <input type="file" id="attachPicker" style="display:none" />
 </body>
 </html>
