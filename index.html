@@ -1049,23 +1049,29 @@ emailBtn.addEventListener("click", () => {
     .then((blob) => {
       const url = URL.createObjectURL(blob);
 
-      // Force Safari to download instead of preview
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = pdfName;
-      link.rel = "noopener";
-      link.target = "_blank";
+      // Create hidden iframe to force download without preview
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url;
 
-      // Synthetic click event (Safari-safe)
-      const clickEvent = new MouseEvent("click", {
-        view: window,
-        bubbles: true,
-        cancelable: true
-      });
-      link.dispatchEvent(clickEvent);
+      document.body.appendChild(iframe);
 
-      // Give Safari time to finish the download
-      setTimeout(() => openPrefilledEmail(pdfName, to), 500);
+      // Trigger download via iframe
+      setTimeout(() => {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = pdfName;
+        link.click();
+
+        // Clean up iframe
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(url);
+        }, 500);
+
+        // Open email AFTER download
+        setTimeout(() => openPrefilledEmail(pdfName, to), 600);
+      }, 200);
     });
 });
   }
