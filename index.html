@@ -1042,13 +1042,19 @@ emailBtn.addEventListener("click", () => {
   const to = document.getElementById("custEmail").value || "";
   const el = document.getElementById("pdfCaptureArea");
 
-  // Generate + save PDF ONCE
+  // Generate PDF as a Blob instead of auto-opening viewer
   html2pdf()
     .set(pdfOptions(pdfName))
     .from(el)
-    .save()
-    .then(() => {
-      // After PDF is saved, open Mail
+    .outputPdf("blob")
+    .then((blob) => {
+      // Save the PDF manually without opening the viewer
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = pdfName;
+      link.click();
+
+      // After save completes, open Mail
       setTimeout(() => openPrefilledEmail(pdfName, to), 300);
     });
 });
