@@ -628,7 +628,8 @@ const sectionsConfig = [
   ]},
   { id:"hardware", title:"Hardware & Fasteners", items:[
     "Hinges","Hinge Pins","Fasteners Tight","Brackets","Struts",
-    "Top Fixtures","Bottom Fixtures","General Hardware Condition"
+    // Removed: Top Fixtures, Bottom Fixtures
+    "General Hardware Condition"
   ]},
   { id:"rollers", title:"Rollers", items:[
     "Roller Condition","Roller Bearings","Roller Shafts","Roller Wear",
@@ -649,26 +650,30 @@ const sectionsConfig = [
   ]},
   { id:"weather", title:"Weather Seals & Insulation", items:[
     "Bottom Seal","Side Seals","Top Seal","Panel Insulation",
-    "Thermal Efficiency","Air Gaps","Seal Wear","General Weather Seal Condition"
+    // Removed: Thermal Efficiency
+    "Air Gaps","Seal Wear","General Weather Seal Condition"
   ]},
   { id:"safety", title:"Safety Features", items:[
     "Photo Eyes","Photo Eye Alignment","Photo Eye Wiring","Auto‑Reverse Test",
-    "Force Setting","Emergency Release","Manual Operation","Safety Labels",
-    "General Safety Condition","UL‑325 Compliance"
+    "Force Setting","Emergency Release","Manual Operation",
+    // Removed: Safety Labels, UL‑325 Compliance
+    "General Safety Condition"
   ]},
   { id:"opener", title:"Opener Unit", items:[
     "Motor Unit","Rail Assembly","Trolley","Belt / Chain","Travel Limits",
     "Force Settings","Light Operation","Cover Condition",
-    "General Opener Condition","Noise Level"
+    "General Opener Condition"
+    // Removed: Noise Level
   ]},
   { id:"controls", title:"Controls & Connectivity", items:[
     "Wall Console","Remote Controls","Keypad","WiFi Connectivity",
-    "App Control","Battery Backup","Wiring Condition",
-    "General Control Condition","Programming","Signal Strength"
+    // Removed: App Control, Battery Backup stays, Wiring Condition removed, Signal Strength removed
+    "Battery Backup",
+    "General Control Condition","Programming"
   ]},
   { id:"power", title:"Power & Electrical", items:[
-    "Power Cord","Outlet Condition","GFCI","Voltage","Wiring",
-    "Conduit","Breaker","General Electrical Condition"
+    "Power Cord","Outlet Condition","GFCI",
+    // Removed: Voltage, Wiring, Conduit, Breaker, General Electrical Condition
   ]},
   { id:"operation", title:"Operational Test", items:[
     "Smooth Operation","Noise Level","Balance Test","Manual Lift",
