@@ -434,6 +434,16 @@
   resize: vertical;    /* Still allows expanding if needed */
 }
 
+ /* PAGE BREAK AFTER JOB INFO */
+    #jobInfoPage {
+      page-break-after: always;
+    }
+
+    /* PAGE BREAK BEFORE + AFTER EACH INSPECTION SECTION */
+    .inspectionPage {
+      page-break-after: always;
+    }
+
   </style>
 </head>
 <body>
@@ -460,6 +470,8 @@
 
   <div class="header-divider"></div>
 
+<!-- start jobInfoPage -->
+  <div id="jobInfoPage">
   <div class="job-info">
     <div class="job-header">
       <h3>Job Information</h3>
@@ -510,8 +522,9 @@
     </div>
 
   </div> <!-- END job-info -->
+</div> <!-- END jobInfoPage -->
 
-  <div id="sectionsContainer"></div>
+    <div id="sectionsContainer"></div>
 
 
 <!-- RECOMMENDATIONS SECTION -->
@@ -563,7 +576,7 @@
       <div class="actions">
         <button id="resetBtn" class="btn btn-secondary">Reset</button>
         <button id="pdfBtn" class="action-btn">Generate PDF</button>
-<button id="emailBtn" class="action-btn">Email PDF</button>
+        <button id="emailBtn" class="action-btn">Email PDF</button>
 
       </div>
     
@@ -762,7 +775,11 @@ function buildSections() {
 
     wrap.appendChild(band);
     wrap.appendChild(sec);
-    container.appendChild(wrap);
+// PAGE WRAPPER FOR PAGE BREAKS
+const pageWrapper = document.createElement("div");
+pageWrapper.className = "inspectionPage";
+pageWrapper.appendChild(wrap);
+container.appendChild(pageWrapper);
   });
 }
 
