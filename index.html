@@ -585,6 +585,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+
+ 
+/* ============================================================
+   device adaptive scaling for memory
+============================================================ */
+function getAdaptiveScale() {
+  const dpr = window.devicePixelRatio || 1;
+
+  // Older iPads (A7–A10) → low memory → scale 1
+  if (dpr <= 2) return 1;
+
+  // Mid‑range devices → scale 1.5
+  if (dpr <= 3) return 1.5;
+
+  // Modern iPads (A14–A16) → scale 2
+  return 2;
+}
+
 /* ============================================================
    STORAGE
 ============================================================ */
@@ -976,9 +994,13 @@ function pdfOptions(filename) {
     margin: 10,
     filename,
     image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    html2canvas: { 
+      scale: getAdaptiveScale(), 
+      useCORS: true, 
+      scrollY: 0 
+    },
     jsPDF: { unit: "pt", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css","legacy"] }
+    pagebreak: { mode: ["css"] }
   };
 }
 
