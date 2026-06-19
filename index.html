@@ -1053,16 +1053,15 @@ function buildPdfName() {
   const dd = String(d.getDate()).padStart(2,"0");
   const yyyy = d.getFullYear();
 
-  return `${phone}_${name}_${yyyy}${mm}${dd}.pdf`;
+  return `${phone}_${name}_${yyyy}${mm}${dd}_Inspection.pdf`;
 }
 
 function openPrefilledEmail(pdfName, to) {
   const cc = "a2zproservices@gmail.com";
   const subject = encodeURIComponent("Garage Door Inspection Report");
   const body = encodeURIComponent(
-    "Attached is your inspection report.\n\n" +
-    "If the file picker does not open automatically, tap the attachment icon and select:\n" +
-    pdfName + "\n\n"
+    "Attached is your inspection report.\n\n"
+    
   );
 
   window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
