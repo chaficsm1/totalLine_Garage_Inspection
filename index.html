@@ -952,11 +952,37 @@ function bindExistingRecRemovers() {
 ============================================================ */
 
 function initSignaturePads() {
-  ["sigTech","sigCust"].forEach(id => {
+  ["sigTech", "sigCust"].forEach(id => {
     const canvas = document.getElementById(id);
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
+
+    // DEVICE‑ADAPTIVE SCALING
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+      // Save existing drawing
+      const old = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Resize canvas to match device pixel ratio
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.imageSmoothingEnabled = false;
+
+      // Restore drawing (if any)
+      ctx.putImageData(old, 0, 0);
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // DRAWING LOGIC
     let drawing = false;
 
     canvas.addEventListener("pointerdown", e => {
@@ -975,12 +1001,14 @@ function initSignaturePads() {
     canvas.addEventListener("pointerleave", () => drawing = false);
   });
 
+  // CLEAR BUTTONS
   document.querySelectorAll("[data-clear]").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-clear");
       const canvas = document.getElementById(id);
       if (!canvas) return;
-      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
   });
 }
