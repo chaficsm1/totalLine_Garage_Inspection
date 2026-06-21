@@ -19,6 +19,29 @@
       --text-muted: #616161;
     }
 
+    .info-textarea {
+  width: 100%;
+  min-height: 32px;
+  resize: none;
+  overflow: hidden;
+  font-size: 16px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* PDF-only fields */
+.pdf-field {
+  display: none;
+  white-space: pre-wrap;
+  font-size: 16px;
+  padding: 6px 8px;
+}
+
+
     .section-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -521,16 +544,24 @@
       </div>
     </div>
 
-    <!-- Door specs -->
-      <div class="info-field">
-        <label class="info-label">Door specs</label>
-        <input id="techName" class="info-input" />
-      </div>
-      <!-- Door specs -->
-        <div class="info-field">
-          <label class="info-label">Opener specs</label>
-          <input id="techName" class="info-input" />
-        </div>
+    <!-- Door Specs -->
+<div class="info-field">
+  <label class="info-label">Door Specs</label>
+  <textarea id="doorSpecs" class="info-textarea" placeholder="Enter door specs..."></textarea>
+
+  <!-- PDF mirror -->
+  <div id="doorSpecs_pdf" class="pdf-field"></div>
+</div>
+
+<!-- Opener Specs -->
+<div class="info-field">
+  <label class="info-label">Opener Specs</label>
+  <textarea id="openerSpecs" class="info-textarea" placeholder="Enter opener specs..."></textarea>
+
+  <!-- PDF mirror -->
+  <div id="openerSpecs_pdf" class="pdf-field"></div>
+</div>
+
 
   </div> <!-- END job-info -->
 </div> <!-- END jobInfoPage -->
@@ -596,6 +627,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+
+ function prepareMultilineFieldsForPDF() {
+  const pairs = [
+    ["doorSpecs", "doorSpecs_pdf"],
+    ["openerSpecs", "openerSpecs_pdf"]
+  ];
+
+  pairs.forEach(([inputId, pdfId]) => {
+    const input = document.getElementById(inputId);
+    const pdf = document.getElementById(pdfId);
+
+    if (input && pdf) {
+      pdf.innerHTML = input.value.replace(/\n/g, "<br>");
+    }
+  });
+}
+ 
 
  
 /* ============================================================
@@ -1033,6 +1081,29 @@ function resizeCanvas() {
   });
 }
 
+function beforePDF() {
+  prepareMultilineFieldsForPDF();
+
+  document.querySelectorAll(".pdf-field").forEach(el => {
+    el.style.display = "block";
+  });
+
+  document.querySelectorAll(".info-textarea").forEach(el => {
+    el.style.display = "none";
+  });
+}
+
+function afterPDF() {
+  document.querySelectorAll(".pdf-field").forEach(el => {
+    el.style.display = "none";
+  });
+
+  document.querySelectorAll(".info-textarea").forEach(el => {
+    el.style.display = "block";
+  });
+}
+
+
 /* ============================================================
    PDF + EMAIL
 ============================================================ */
@@ -1093,6 +1164,19 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("D: applySavedInspectionState");
   applySavedInspectionState();
     console.log("E: bindInspectionEvents");
+      // Auto-expand all info-textarea fields
+  document.querySelectorAll(".info-textarea").forEach(area => {
+    // Expand on load (for restored content)
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+
+    // Expand as user types
+    area.addEventListener("input", () => {
+      area.style.height = "auto";
+      area.style.height = area.scrollHeight + "px";
+    });
+  });
+
   bindInspectionEvents();
     console.log("F: bindExistingRecRemovers");
   bindExistingRecRemovers();
@@ -1118,13 +1202,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("I: bind pdfBtn");
   const pdfBtn = document.getElementById("pdfBtn");
-  if (pdfBtn) {
-    pdfBtn.addEventListener("click", () => {
-      const pdfName = buildPdfName();
-      const el = document.getElementById("pdfCaptureArea");
-      html2pdf().set(pdfOptions(pdfName)).from(el).save();
-    });
-  }
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", () => {
+    const pdfName = buildPdfName();
+    const el = document.getElementById("pdfCaptureArea");
+
+    beforePDF();
+
+    html2pdf()
+      .set(pdfOptions(pdfName))
+      .from(el)
+      .save()
+      .then(() => {
+        afterPDF();
+      });
+  });
+}
 
     console.log("J: bind emailBtn");
   const emailBtn = document.getElementById("emailBtn");
@@ -1134,11 +1227,15 @@ emailBtn.addEventListener("click", () => {
   const to = document.getElementById("custEmail").value || "";
   const el = document.getElementById("pdfCaptureArea");
 
+  beforePDF();
+
   html2pdf()
     .set(pdfOptions(pdfName))
     .from(el)
     .outputPdf("blob")
     .then((blob) => {
+      afterPDF();
+
       const url = URL.createObjectURL(blob);
 
       // Create hidden iframe to force download without preview
