@@ -4,174 +4,173 @@
   <meta charset="UTF-8" />
   <title>TotalLine Garage Door Inspection</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<link rel="stylesheet" href="assets/css/style.css">
 
 <body>
   <div class="app" id="appRoot">
-   <!-- PDF CAPTURE AREA START -->
-<div id="pdfCaptureArea">
-  <div class="header">
-  <div class="header-left">
-<img src="https://raw.githubusercontent.com/chaficsm1/totalLine_Garage/main/garage.png"
-     class="logo-img"
-     crossorigin="anonymous">
-    <div class="header-title">TotalLine Garage Door Inspection</div>
-  </div>
 
-  <div class="header-right">
-    <div class="header-company">
-      <div class="company-line">(913) 687-8382</div>
-      <div class="company-line">a2zproservices@gmail.com</div>
+    <!-- PDF CAPTURE AREA START -->
+    <div id="pdfCaptureArea">
+
+      <!-- HEADER -->
+      <div class="header">
+        <div class="header-left">
+          <img 
+            src="https://raw.githubusercontent.com/chaficsm1/totalLine_Garage/main/garage.png"
+            class="logo-img"
+            crossorigin="anonymous"
+          >
+          <div class="header-title">TotalLine Garage Door Inspection</div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-company">
+            <div class="company-line">(913) 687-8382</div>
+            <div class="company-line">a2zproservices@gmail.com</div>
+          </div>
+          <div id="headerDate"></div>
+        </div>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <!-- JOB INFO PAGE -->
+      <div id="jobInfoPage">
+        <div class="job-info">
+
+          <div class="job-header">
+            <h3>Job Information</h3>
+          </div>
+
+          <!-- Customer Detailed Address -->
+          <div class="info-grid three-col">
+            <div class="info-field">
+              <label class="info-label">Customer Name</label>
+              <input id="custName" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">Customer Phone</label>
+              <input id="custPhone" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">Customer Email</label>
+              <input id="custEmail" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">Street Address</label>
+              <input id="custStreet" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">City/State</label>
+              <input id="custCity" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">ZIP Code</label>
+              <input id="custZip" class="info-input" />
+            </div>
+          </div>
+
+          <!-- Technician Info -->
+          <div class="info-grid three-col">
+            <div class="info-field">
+              <label class="info-label">Technician Name</label>
+              <input id="techName" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">Technician Phone</label>
+              <input id="techPhone" class="info-input" />
+            </div>
+            <div class="info-field">
+              <label class="info-label">Technician Email</label>
+              <input id="techEmail" class="info-input" />
+            </div>
+          </div>
+
+          <!-- Door Specs -->
+          <div class="info-field">
+            <label class="info-label">Door Specs</label>
+            <textarea id="doorSpecs" class="info-textarea" placeholder="Enter door specs..."></textarea>
+            <div id="doorSpecs_pdf" class="pdf-field"></div>
+          </div>
+
+          <!-- Opener Specs -->
+          <div class="info-field">
+            <label class="info-label">Opener Specs</label>
+            <textarea id="openerSpecs" class="info-textarea" placeholder="Enter opener specs..."></textarea>
+            <div id="openerSpecs_pdf" class="pdf-field"></div>
+          </div>
+
+        </div> <!-- END job-info -->
+      </div> <!-- END jobInfoPage -->
+
+      <!-- INSPECTION SECTIONS -->
+      <div id="sectionsContainer"></div>
+
+      <!-- RECOMMENDATIONS SECTION -->
+      <div class="section-band">
+        <div class="section-band-title">Recommendations</div>
+      </div>
+
+      <div class="section" id="recommendationsSection">
+        <div id="recList">
+          <div class="rec-row">
+            <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
+            <input class="rec-cost" placeholder="Cost" />
+            <button class="rec-remove">×</button>
+          </div>
+        </div>
+
+        <button id="addRecBtn" class="add-row-btn">+ Add Recommendation</button>
+      </div>
+
+      <!-- SIGNATURE SECTION -->
+      <div class="section-band">
+        <div class="section-band-title">Signatures</div>
+      </div>
+
+      <div class="section signatures">
+        <div class="signature-grid">
+
+          <div class="signature-block">
+            <div class="signature-label">Technician Signature</div>
+            <canvas id="sigTech" class="signature-pad"></canvas>
+            <button class="small-btn" data-clear="sigTech">Clear</button>
+          </div>
+
+          <div class="signature-block">
+            <div class="signature-label">Customer Signature</div>
+            <canvas id="sigCust" class="signature-pad"></canvas>
+            <button class="small-btn" data-clear="sigCust">Clear</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <!-- PDF CAPTURE AREA END -->
+
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+      <button id="resetBtn" class="btn btn-secondary">Reset</button>
+      <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
+      <button id="emailBtn" class="btn btn-primary">Email PDF</button>
     </div>
 
-    <div id="headerDate"></div>
-  </div>
-</div>
+    <!-- Hidden File Picker -->
+    <input type="file" id="attachPicker" style="display:none" />
 
-  <div class="header-divider"></div>
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<!-- start jobInfoPage -->
-  <div id="jobInfoPage">
-  <div class="job-info">
-    <div class="job-header">
-      <h3>Job Information</h3>
-    </div>
+    <!-- App Logic -->
+    <script src="assets/js/app.js"></script>
 
-    <!-- Customer Detailed Address -->
-    <div class="info-grid three-col">
-      <div class="info-field">
-        <label class="info-label">Customer Name</label>
-        <input id="custName" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">Customer Phone</label>
-        <input id="custPhone" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">Customer Email</label>
-        <input id="custEmail" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">Street Address</label>
-        <input id="custStreet" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">City/State</label>
-        <input id="custCity" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">ZIP Code</label>
-        <input id="custZip" class="info-input" />
-      </div>
-    </div>
-
-    <!-- Technician Info -->
-    <div class="info-grid three-col">
-      <div class="info-field">
-        <label class="info-label">Technician Name</label>
-        <input id="techName" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">Technician Phone</label>
-        <input id="techPhone" class="info-input" />
-      </div>
-      <div class="info-field">
-        <label class="info-label">Technician Email</label>
-        <input id="techEmail" class="info-input" />
-      </div>
-    </div>
-
-    <!-- Door Specs -->
-<div class="info-field">
-  <label class="info-label">Door Specs</label>
-  <textarea id="doorSpecs" class="info-textarea" placeholder="Enter door specs..."></textarea>
-
-  <!-- PDF mirror -->
-  <div id="doorSpecs_pdf" class="pdf-field"></div>
-</div>
-
-<!-- Opener Specs -->
-<div class="info-field">
-  <label class="info-label">Opener Specs</label>
-  <textarea id="openerSpecs" class="info-textarea" placeholder="Enter opener specs..."></textarea>
-
-  <!-- PDF mirror -->
-  <div id="openerSpecs_pdf" class="pdf-field"></div>
-</div>
-
-
-  </div> <!-- END job-info -->
-</div> <!-- END jobInfoPage -->
-
-    <div id="sectionsContainer"></div>
-
-
-<!-- RECOMMENDATIONS SECTION -->
-<div class="section-band">
-  <div class="section-band-title">Recommendations</div>
-</div>
-
-<div class="section" id="recommendationsSection">
-  <div id="recList">
-    <div class="rec-row">
-      <textarea class="rec-text" placeholder="Recommendation details..."></textarea>
-      <input class="rec-cost" placeholder="Cost" />
-      <button class="rec-remove">×</button>
-    </div>
-  </div>
-
-  
-  <button id="addRecBtn" class="add-row-btn">+ Add Recommendation</button>
-</div>
-
-
-<!-- SIGNATURE SECTION -->
-
-  <!-- SIGNATURES -->
-<div class="section-band">
-  <div class="section-band-title">Signatures</div>
-</div>
-
-<div class="section signatures">
-  <div class="signature-grid">
-    <div class="signature-block">
-      <div class="signature-label">Technician Signature</div>
-      <canvas id="sigTech" class="signature-pad"></canvas>
-      <button class="small-btn" data-clear="sigTech">Clear</button>
-    </div>
-
-    <div class="signature-block">
-      <div class="signature-label">Customer Signature</div>
-      <canvas id="sigCust" class="signature-pad"></canvas>
-      <button class="small-btn" data-clear="sigCust">Clear</button>
-    </div>
-  </div>
-</div>
-
-
-</div>
-<!-- PDF CAPTURE AREA END -->
-
-      <div class="actions">
-        <button id="resetBtn" class="btn btn-secondary">Reset</button>
-        <button id="pdfBtn" class="btn btn-primary">Generate PDF</button>
-        <button id="emailBtn" class="btn btn-primary">Email PDF</button>
-      </div>
-    
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-
-<input type="file" id="attachPicker" style="display:none" />
-<input type="file" id="attachPicker" style="display:none" />
-<input type="file" id="attachPicker" style="display:none" />
-
-<script src="assets/js/app.js"></script>
-
+  </div> <!-- END appRoot -->
 </body>
 </html>
-
