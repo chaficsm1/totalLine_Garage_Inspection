@@ -8,11 +8,11 @@ export const sectionsConfig = [
     'Insulation','Bottom Seal','Weatherstripping','General Appearance'
   ]},
   { id: 'hardware', title: 'Hardware & Fasteners', items: [
-    'Hinges','Hinge Pins','Fasteners Tight','Brackets','Struts',
+    'Hinges','Fasteners Tight','Brackets','Struts',
     'General Hardware Condition'
   ]},
   { id: 'rollers', title: 'Rollers', items: [
-    'Roller Condition','Roller Bearings','Roller Shafts','Roller Wear',
+    'Roller Condition','Roller Bearings','Roller Wear',
     'Roller Noise','Roller Alignment','Lubrication','General Roller Condition'
   ]},
   { id: 'tracks', title: 'Tracks', items: [
@@ -20,13 +20,14 @@ export const sectionsConfig = [
     'Track Wear','Track Cleanliness','Track Spacing','General Track Condition'
   ]},
   { id: 'springs', title: 'Springs', items: [
-    'Torsion Springs','Extension Springs','Spring Anchor','Spring Cones',
+    'Torsion Springs','Extension Springs','Spring Cones',
     'Spring Tension','Center Bearing Plate','End Bearing Plates',
-    'Shaft Condition','Drums','Cables','General Spring Condition'
+    'Shaft Condition','Drums','Cables','General Spring Condition',
+    'Torsion Middle Bearing'
   ]},
   { id: 'cables', title: 'Cables & Pulleys', items: [
     'Cable Condition','Cable Fraying','Cable Drum Wrap','Cable Tension',
-    'Pulleys','Pulley Bearings','Pulley Alignment','General Cable Condition'
+    'Pulleys','Pulley Alignment','General Cable Condition'
   ]},
   { id: 'weather', title: 'Weather Seals & Insulation', items: [
     'Bottom Seal','Side Seals','Top Seal','Panel Insulation',
