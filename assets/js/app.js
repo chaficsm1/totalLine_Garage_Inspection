@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('A: buildSections');
   buildSections();
 
+  document.getElementById("headerDate").textContent =
+  new Date().toLocaleDateString("en-US");
+
   console.log('B: loadJobInfo');
   loadJobInfo();
 
